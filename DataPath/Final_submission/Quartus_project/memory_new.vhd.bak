@@ -1,0 +1,67 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.ALL;
+entity memory_new is
+   port(clk,reset: in std_logic;
+	mem_enable: in std_logic;
+     	r_w: in std_logic;
+  	addr: in std_logic_vector(15 downto 0);
+        write_data: in std_logic_vector(15 downto 0); 
+        read_data: out std_logic_vector(15 downto 0));
+   
+end entity memory_new;
+
+architecture Behave of memory_new is
+	type mem_arr is array(0 to 65535) of std_logic_vector(15 downto 0);
+	signal mem: mem_arr;
+	type mem_instruction is array(0 to 14) of std_logic_vector(15 downto 0);
+	signal temp : mem_instruction := ("0011001000000010",
+						"0011010000000010",
+						"0011101000000010",
+						"0011011000000010",
+						"0100000010000001",
+						"0000 000 000 100 000",
+						"0100100101000010",
+						"0100000010000011",
+						"0000100100110001",
+						"0000001000011001",
+						"0000001000010010",
+						"0101000011000010",
+						"0100010011000010",
+						"0101011010000001",
+						"0110000000111111");		
+begin	
+	process(clk,reset,mem_enable,r_w,addr,write_data)
+	begin
+		if(mem_enable = '1') then
+			-- read happens throughout the cycle;
+			-- write only at the falling edge;
+			if(reset = '0') then 
+					-- read case, r_w = 0
+					if(r_w = '0') then 
+						read_data <= mem(to_integer(unsigned(addr)));
+					-- write case, r_w = 1
+					else	
+					    if(clk'event and (clk  = '1')) then						
+						 mem(to_integer(unsigned(addr))) <= write_data;
+					    end if;
+					  	 -- value at the output is the value that has just been written
+						read_data <= write_data;
+					end if;	
+			else 
+				for I in 0 to 65535 loop
+					if(I < 15) then 
+					mem(I) <= temp(I);
+					elsif(I = 257) then
+					mem(I) <= "0000000000000010";
+					elsif(I = 258) then
+					mem(I) <= "0000000000000110";
+ 					else mem(I) <= "0000000000000000";
+					end if;	
+				end loop;
+			end if;
+		end if;
+	end process;
+		
+end Behave;
+		
